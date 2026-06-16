@@ -75,5 +75,8 @@ The fastest way to test the system is using Docker Compose, which spins up both 
 ## 📡 Live Demo
 [🔗 View the Deployed Application Here](https://sessionmind-x28c.onrender.com)
 
+## 📊 ML Simulation
+[🔗 View the UCB1 Bandit Kaggle Simulation Here](https://www.kaggle.com/code/wxyzkaggle/notebook4ee4873e38)
+
 ## 👤 Team
 - **Akash T S M** – ML Engineering & Backend Architecture
