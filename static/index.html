@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SessionMind</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glow-gold {
+            box-shadow: 0 0 15px 2px rgba(250, 204, 21, 0.6);
+            border-color: #facc15 !important;
+        }
+        .flash-blue {
+            animation: flashBlue 0.5s ease-out;
+        }
+        @keyframes flashBlue {
+            0% { box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.8); border-color: #3b82f6; }
+            100% { box-shadow: 0 0 0px 0px rgba(59, 130, 246, 0); border-color: transparent; }
+        }
+        .slide-in {
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #score-bar {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen font-sans">
+    <div class="container mx-auto p-4 flex flex-col lg:flex-row gap-6 h-screen">
+        
+        <!-- LEFT COLUMN: Session Info (w-1/4 on desktop) -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-6">
+            <div>
+                <h1 class="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 mb-1">SessionMind</h1>
+                <p class="text-gray-400 text-sm">Real-Time AI Personalization Engine</p>
+            </div>
+
+            <!-- Score Meter -->
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold tracking-wider text-gray-400">PERSONALIZATION SCORE</h3>
+                    <span id="score-text" class="font-mono font-bold text-lg text-blue-400">0%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-3 mb-1 overflow-hidden">
+                    <div id="score-bar" class="bg-gray-500 h-3 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Session Info Box -->
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg">
+                <h3 class="text-xs font-bold tracking-wider text-gray-400 mb-3">SESSION INFO</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">ID</span>
+                        <span id="session-id-display" class="font-mono text-gray-300">...</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Total Clicks</span>
+                        <span id="total-clicks-display" class="font-bold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-400">Top Category</span>
+                        <span id="top-category-display" class="text-white">-</span>
+                    </div>
+                </div>
+                <button id="reset-btn" class="w-full mt-5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-2 rounded-lg text-sm font-semibold transition-colors">
+                    Reset Session
+                </button>
+            </div>
+
+            <!-- Category Legend -->
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-lg hidden lg:block">
+                <h3 class="text-xs font-bold tracking-wider text-gray-400 mb-3">CATEGORIES</h3>
+                <div id="category-legend" class="grid grid-cols-2 gap-2 text-xs">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MIDDLE COLUMN: Product Catalog (w-1/2 on desktop) -->
+        <div class="w-full lg:w-1/2 flex flex-col h-full overflow-hidden">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h2 class="text-xl font-bold">Product Catalog</h2>
+                <span class="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full"><span id="product-count">0</span> items</span>
+            </div>
+            
+            <div class="overflow-y-auto scrollbar-hide pb-20 flex-grow">
+                <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                    <!-- Product Cards injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Recommendations & Log (w-1/4 on desktop) -->
+        <div class="w-full lg:w-1/4 flex flex-col h-full gap-6">
+            <!-- Live Recommendations -->
+            <div class="flex-1 bg-gray-800 rounded-xl border border-gray-700 shadow-lg flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-700 flex justify-between items-center shrink-0 bg-gray-800/80 backdrop-blur-sm z-10">
+                    <h2 class="text-sm font-bold tracking-wider">LIVE RECOMMENDATIONS</h2>
+                    <div class="w-3 h-3 rounded-full bg-red-500 pulse-dot"></div>
+                </div>
+                <div class="p-4 overflow-y-auto scrollbar-hide flex-1">
+                    <div id="recommendations-list" class="space-y-3">
+                        <!-- Recommendation items injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Log -->
+            <div class="h-1/3 bg-gray-800 rounded-xl border border-gray-700 shadow-lg flex flex-col overflow-hidden">
+                <div class="p-3 border-b border-gray-700 shrink-0">
+                    <h2 class="text-xs font-bold tracking-wider text-gray-400">SESSION EVENT LOG</h2>
+                </div>
+                <div class="p-3 overflow-y-auto scrollbar-hide flex-1 font-mono text-xs">
+                    <div id="event-log-list" class="space-y-2">
+                        <!-- Event log items injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Category styling mapping
+        const CATEGORY_STYLES = {
+            "Electronics": "bg-blue-100 text-blue-800",
+            "Fashion": "bg-pink-100 text-pink-800",
+            "Home": "bg-yellow-100 text-yellow-800",
+            "Sports": "bg-green-100 text-green-800",
+            "Beauty": "bg-purple-100 text-purple-800",
+            "Books": "bg-orange-100 text-orange-800",
+            "Gaming": "bg-red-100 text-red-800",
+            "Travel": "bg-teal-100 text-teal-800"
+        };
+
+        const CATEGORIES = Object.keys(CATEGORY_STYLES);
+
+        let sessionId = null;
+        let ws = null;
+        let recommendedIds = new Set();
+        let allProductsMap = new Map();
+
+        // Initialization
+        async function init() {
+            // Setup Session
+            sessionId = crypto.randomUUID();
+            document.getElementById('session-id-display').textContent = sessionId.substring(0, 8);
+            
+            // Populate Legend
+            renderLegend();
+
+            // Fetch Products
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            
+            document.getElementById('product-count').textContent = data.products.length;
+            
+            data.products.forEach(p => allProductsMap.set(p.id, p));
+            renderProductGrid(data.products);
+
+            // Connect WebSocket
+            connectWebSocket();
+
+            // Bind Reset
+            document.getElementById('reset-btn').addEventListener('click', resetSession);
+        }
+
+        function renderLegend() {
+            const legend = document.getElementById('category-legend');
+            CATEGORIES.forEach(cat => {
+                const colorClasses = CATEGORY_STYLES[cat].split(' ');
+                const dotColor = colorClasses[0].replace('bg-', 'text-');
+                
+                const el = document.createElement('div');
+                el.className = "flex items-center gap-1";
+                el.innerHTML = `<span class="w-2 h-2 rounded-full ${CATEGORY_STYLES[cat].split(' ')[0]}"></span> <span>${cat}</span>`;
+                legend.appendChild(el);
+            });
+        }
+
+        function renderProductGrid(products) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            products.forEach(p => {
+                const card = document.createElement('div');
+                card.id = `card-${p.id}`;
+                card.className = "bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition-colors border border-gray-700 flex flex-col items-center text-center group relative";
+                
+                card.innerHTML = `
+                    <div class="text-4xl mb-2 group-hover:scale-110 transition-transform">${p.image_emoji}</div>
+                    <h4 class="text-xs font-semibold text-gray-200 line-clamp-2 h-8 mb-2 leading-tight">${p.name}</h4>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[p.category]} mb-1">${p.category}</span>
+                    <span class="text-xs text-gray-400 font-mono">$${p.price.toFixed(2)}</span>
+                `;
+                
+                card.addEventListener('click', () => handleProductClick(p.id));
+                grid.appendChild(card);
+            });
+        }
+
+        async function handleProductClick(productId) {
+            // Visual feedback
+            const card = document.getElementById(`card-${productId}`);
+            if(card) {
+                card.classList.remove('flash-blue');
+                void card.offsetWidth; // trigger reflow
+                card.classList.add('flash-blue');
+            }
+
+            // Send event via POST
+            const payload = {
+                session_id: sessionId,
+                product_id: productId,
+                timestamp: new Date().toISOString()
+            };
+            
+            fetch('/api/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(console.error);
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/${sessionId}`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWsUpdate(data);
+            };
+            
+            ws.onclose = () => {
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        function handleWsUpdate(data) {
+            if (data.type === "recommendation_update" || data.type === "initial_state") {
+                // Update UI state
+                updateRecommendations(data.recommendations);
+                updateScore(data.personalization_score);
+                
+                // Update session info
+                document.getElementById('total-clicks-display').textContent = data.total_clicks;
+                
+                // Find top category
+                if (data.category_boost && Object.keys(data.category_boost).length > 0) {
+                    const topCat = Object.entries(data.category_boost).sort((a,b) => b[1] - a[1])[0][0];
+                    const catSpan = document.getElementById('top-category-display');
+                    catSpan.textContent = topCat;
+                    catSpan.className = `text-[10px] px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[topCat]}`;
+                } else {
+                    document.getElementById('top-category-display').textContent = '-';
+                    document.getElementById('top-category-display').className = 'text-white';
+                }
+                
+                // Add to log if it was an update
+                if (data.type === "recommendation_update" && data.triggered_by) {
+                    appendLog(data.triggered_by);
+                }
+            } else if (data.type === "session_reset") {
+                // Clear UI
+                updateRecommendations([]);
+                updateScore(0);
+                document.getElementById('total-clicks-display').textContent = '0';
+                document.getElementById('top-category-display').textContent = '-';
+                document.getElementById('top-category-display').className = 'text-white';
+                document.getElementById('event-log-list').innerHTML = '';
+            }
+        }
+
+        function updateRecommendations(recs) {
+            const list = document.getElementById('recommendations-list');
+            list.innerHTML = '';
+            
+            // Remove old glowing borders
+            recommendedIds.forEach(id => {
+                const card = document.getElementById(`card-${id}`);
+                if(card) card.classList.remove('glow-gold', 'border-yellow-400');
+            });
+            
+            recommendedIds.clear();
+            
+            recs.forEach((p, index) => {
+                recommendedIds.add(p.id);
+                
+                // Build recommendation item
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-3 bg-gray-700/50 p-2 rounded-lg slide-in border border-gray-600/50";
+                item.style.animationDelay = `${index * 0.05}s`;
+                
+                item.innerHTML = `
+                    <div class="flex-shrink-0 w-6 text-center font-mono text-gray-500 font-bold text-xs">#${index+1}</div>
+                    <div class="flex-shrink-0 w-10 h-10 bg-gray-800 rounded-md flex items-center justify-center text-xl">${p.image_emoji}</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-medium text-white truncate">${p.name}</div>
+                        <div class="text-[10px] ${CATEGORY_STYLES[p.category].replace('bg-', 'text-').split(' ')[1]}">${p.category}</div>
+                    </div>
+                `;
+                list.appendChild(item);
+                
+                // Add glowing border to grid card
+                const card = document.getElementById(`card-${p.id}`);
+                if(card) card.classList.add('glow-gold');
+            });
+        }
+
+        function updateScore(score) {
+            const bar = document.getElementById('score-bar');
+            const text = document.getElementById('score-text');
+            
+            const rounded = Math.floor(score);
+            text.textContent = `${rounded}%`;
+            bar.style.width = `${Math.min(100, score)}%`;
+            
+            if (score < 20) {
+                bar.className = "h-3 rounded-full bg-gray-500";
+                text.className = "font-mono font-bold text-lg text-gray-400";
+            } else if (score < 60) {
+                bar.className = "h-3 rounded-full bg-blue-500";
+                text.className = "font-mono font-bold text-lg text-blue-400";
+            } else {
+                bar.className = "h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]";
+                text.className = "font-mono font-bold text-lg text-emerald-400";
+            }
+        }
+
+        function appendLog(productId) {
+            const p = allProductsMap.get(productId);
+            if (!p) return;
+            
+            const list = document.getElementById('event-log-list');
+            const item = document.createElement('div');
+            item.className = "flex gap-2 items-start slide-in";
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], {hour12:false});
+            
+            item.innerHTML = `
+                <span class="text-gray-500 shrink-0">[${timeStr}]</span>
+                <span class="text-gray-300 truncate"><span class="${CATEGORY_STYLES[p.category].replace('bg-', 'text-').split(' ')[1]}">CLICK</span> ${p.name}</span>
+            `;
+            
+            list.insertBefore(item, list.firstChild);
+            
+            // Keep only last 10
+            while (list.children.length > 10) {
+                list.removeChild(list.lastChild);
+            }
+        }
+
+        async function resetSession() {
+            if(!sessionId) return;
+            await fetch(`/api/session/${sessionId}`, { method: 'DELETE' });
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

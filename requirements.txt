@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+redis[asyncio]
+numpy
+python-dotenv
+websockets
+httpx
