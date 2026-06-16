@@ -24,7 +24,7 @@ The fastest way to test the system is using Docker Compose, which spins up both 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/sessionmind.git
+   git clone https://github.com/akash3tsm7/sessionmind.git
    cd sessionmind
    ```
 
