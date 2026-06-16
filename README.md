@@ -37,7 +37,7 @@ The fastest way to test the system is using Docker Compose, which spins up both 
    [http://localhost:8000](http://localhost:8000)
 
 ## 📡 Live Demo
-[🔗 View the Deployed Application Here](#) *(Link coming soon)*
+[🔗 View the Deployed Application Here](https://sessionmind-x28c.onrender.com)
 
 ## 👤 Team
 - **Akash T S M** – ML Engineering & Backend Architecture
